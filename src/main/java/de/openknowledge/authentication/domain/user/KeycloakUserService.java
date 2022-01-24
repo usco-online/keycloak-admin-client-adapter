@@ -44,6 +44,7 @@ import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.Password;
 import de.openknowledge.authentication.domain.RealmName;
 import de.openknowledge.authentication.domain.UserIdentifier;
+import de.openknowledge.authentication.domain.Username;
 import de.openknowledge.authentication.domain.error.ResponseErrorMessage;
 import de.openknowledge.authentication.domain.group.GroupId;
 import de.openknowledge.authentication.domain.group.GroupName;
@@ -79,11 +80,17 @@ public class KeycloakUserService {
 
   public boolean checkAlreadyExist(UserAccount account) {
     notNull(account, "account may be not null");
+    UserAccount existingUserAccount = searchUser(account.getUsername());
+    return existingUserAccount != null;
+  }
+
+  public UserAccount searchUser(Username username) {
+    notNull(username, "username may be not null");
     UsersResource usersResource = keycloakAdapter.findUsersResource(getRealmName());
-    List<UserRepresentation> existingUsersByUsername = usersResource.search(account.getUsername().getValue(), 0, 1);
-    LOG.debug("User already exists because result list is not empty (size is: {})",
-        (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
-    return (existingUsersByUsername != null && !existingUsersByUsername.isEmpty());
+    List<UserRepresentation> existingUsersByUsername = usersResource.search(username.getValue(), 0, 1);
+    LOG.debug("User exists because result list is not empty (size is: {})",
+      (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
+    return existingUsersByUsername != null && !existingUsersByUsername.isEmpty() ? new UserAccount(existingUsersByUsername.get(0)) : null;
   }
 
   public UserAccount createUser(UserAccount account, EmailVerifiedMode mode) throws UserCreationFailedException {

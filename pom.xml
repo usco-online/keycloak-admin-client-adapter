@@ -4,21 +4,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>de.openknowledge.authentication</groupId>
+  <groupId>de.usco</groupId>
   <artifactId>keycloak-admin-client-adapter</artifactId>
   <version>1.5.8</version>
   <packaging>jar</packaging>
 
   <name>Keycloak Admin Client Adapter</name>
   <description>A keycloak admin client adapter to provide convenience methods to create or login users on keycloak</description>
-  <url>https://github.com/openknowledge</url>
+  <url>https://github.com/usco-online</url>
 
   <developers>
     <developer>
       <name>Tim de Buhr</name>
-      <email>tim.debuhr@openknowledge.de</email>
-      <organization>OPEN KNOWLEDGE GmbH</organization>
-      <url>https://www.openknowledge.de</url>
+      <email>opensource@tdbit.de</email>
+      <organization>Tim de Buhr - Freiberufler</organization>
+      <url>https://www.tdbit.de</url>
     </developer>
     <developer>
       <name>Pieter Igel</name>
@@ -36,19 +36,16 @@
   </licenses>
 
   <scm>
-    <url>https://github.com/openknowledge/keycloak-admin-client-adapter</url>
-    <connection>scm:git:git://github.com/openknowledge/keycloak-admin-client-adapter.git</connection>
-    <developerConnection>scm:git:ssh://github.com:openknowledge/keycloak-admin-client-adapter.git</developerConnection>
+    <url>https://github.com/usco-online/keycloak-admin-client-adapter</url>
+    <connection>scm:git:git://github.com/usco-online/keycloak-admin-client-adapter.git</connection>
+    <developerConnection>scm:git:ssh://github.com:usco-online/keycloak-admin-client-adapter.git</developerConnection>
   </scm>
 
   <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
     <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <id>usco-github</id>
+      <name>GitHub usco-online Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/usco-online/keycloak-admin-client-adapter</url>
     </repository>
   </distributionManagement>
 
@@ -64,21 +61,21 @@
     <mp-config.version>1.4</mp-config.version>
 
     <!-- keycloak -->
-    <keycloak-admin-client.version>13.0.0</keycloak-admin-client.version>
-    <bcprov-jdk15on.version>1.67</bcprov-jdk15on.version>
+    <keycloak-admin-client.version>16.1.0</keycloak-admin-client.version>
+    <bcprov-jdk15on.version>1.69</bcprov-jdk15on.version>
 
     <!-- common -->
-    <commons-lang.version>3.10</commons-lang.version>
+    <commons-lang.version>3.12.0</commons-lang.version>
 
     <!-- logging -->
-    <slf4j.version>1.7.30</slf4j.version>
+    <slf4j.version>1.7.32</slf4j.version>
 
     <!-- testing -->
     <jsonb-api-yasson.version>1.0.7</jsonb-api-yasson.version>
-    <junit-jupiter.version>5.7.1</junit-jupiter.version>
-    <junit-platform.version>1.7.1</junit-platform.version>
-    <assertj.version>3.16.1</assertj.version>
-    <mockito.version>3.3.3</mockito.version>
+    <junit-jupiter.version>5.8.2</junit-jupiter.version>
+    <junit-platform.version>1.8.2</junit-platform.version>
+    <assertj.version>3.22.0</assertj.version>
+    <mockito.version>4.2.0</mockito.version>
 
     <!-- maven plugins -->
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -248,7 +245,7 @@
         </executions>
       </plugin>
       <!-- required to upload to maven central -->
-      <plugin>
+      <!--plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
         <version>${maven-source-plugin.version}</version>
@@ -274,8 +271,8 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
+      </plugin-->
+      <!--plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
         <version>${maven-gpg-plugin.version}</version>
@@ -290,7 +287,7 @@
         </executions>
         <configuration>
           <gpgArguments>
-            <arg>--pinentry-mode</arg>
+            <arg>pinentry-mode</arg>
             <arg>loopback</arg>
           </gpgArguments>
         </configuration>
@@ -307,7 +304,7 @@
           <autoReleaseAfterClose>true</autoReleaseAfterClose>
           <stagingProgressTimeoutMinutes>15</stagingProgressTimeoutMinutes>
         </configuration>
-      </plugin>
+      </plugin-->
     </plugins>
   </build>
 

@@ -98,8 +98,12 @@ public class KeycloakUserServiceTest {
 
   @Test
   void trueForCheckAlreadyExists() {
+    // returned user
+    UserRepresentation userRepresentation = account.asRepresentation(false);
+    userRepresentation.setId("JUnit-Test-ID");
+    // check
     doReturn(usersResource).when(keycloakAdapter).findUsersResource(RealmName.fromValue("realmName"));
-    doReturn(Collections.singletonList(new UserRepresentation())).when(usersResource).search(account.getUsername().getValue(), 0, 1);
+    doReturn(Collections.singletonList(userRepresentation)).when(usersResource).search(account.getUsername().getValue(), 0, 1);
     Boolean result = service.checkAlreadyExist(account);
     assertThat(result).isTrue();
     verifyNoMoreInteractions(userResource, usersResource, keycloakAdapter);
