@@ -87,7 +87,7 @@ public class KeycloakUserService {
   public UserAccount searchUser(Username username) {
     notNull(username, "username may be not null");
     UsersResource usersResource = keycloakAdapter.findUsersResource(getRealmName());
-    List<UserRepresentation> existingUsersByUsername = usersResource.search(username.getValue(), 0, 1);
+    List<UserRepresentation> existingUsersByUsername = usersResource.search(username.getValue(), true);
     LOG.debug("User exists because result list is not empty (size is: {})",
       (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
     return existingUsersByUsername != null && !existingUsersByUsername.isEmpty() ? new UserAccount(existingUsersByUsername.get(0)) : null;
