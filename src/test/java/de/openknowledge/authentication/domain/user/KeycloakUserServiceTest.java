@@ -90,7 +90,7 @@ public class KeycloakUserServiceTest {
   @Test
   void falseForCheckAlreadyExists() {
     doReturn(usersResource).when(keycloakAdapter).findUsersResource(RealmName.fromValue("realmName"));
-    doReturn(new ArrayList<>()).when(usersResource).search(account.getUsername().getValue(), 0 ,1);
+    doReturn(new ArrayList<>()).when(usersResource).search(account.getUsername().getValue(), true);
     Boolean result = service.checkAlreadyExist(account);
     assertThat(result).isFalse();
     verifyNoMoreInteractions(userResource, usersResource, keycloakAdapter);
@@ -103,7 +103,7 @@ public class KeycloakUserServiceTest {
     userRepresentation.setId("JUnit-Test-ID");
     // check
     doReturn(usersResource).when(keycloakAdapter).findUsersResource(RealmName.fromValue("realmName"));
-    doReturn(Collections.singletonList(userRepresentation)).when(usersResource).search(account.getUsername().getValue(), 0, 1);
+    doReturn(Collections.singletonList(userRepresentation)).when(usersResource).search(account.getUsername().getValue(), true);
     Boolean result = service.checkAlreadyExist(account);
     assertThat(result).isTrue();
     verifyNoMoreInteractions(userResource, usersResource, keycloakAdapter);
