@@ -26,8 +26,8 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.openknowledge.authentication.domain.ClientId;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
+import de.openknowledge.authentication.domain.UserIdentifier;
 import de.openknowledge.authentication.domain.role.RoleName;
 import de.openknowledge.authentication.domain.role.RoleType;
 import de.openknowledge.authentication.domain.token.KeycloakTokenService;
@@ -37,7 +37,6 @@ import de.openknowledge.authentication.domain.user.EmailVerifiedMode;
 import de.openknowledge.authentication.domain.user.KeycloakUserService;
 import de.openknowledge.authentication.domain.user.UserAccount;
 import de.openknowledge.authentication.domain.user.UserCreationFailedException;
-import de.openknowledge.authentication.domain.UserIdentifier;
 
 @ApplicationScoped
 public class KeycloakRegistrationService {
@@ -90,8 +89,8 @@ public class KeycloakRegistrationService {
       // if the clientId as realm role is required to access client
       if (isRoleRequired()) {
         // client id as role to access client (because: required role extension)
-        ClientId clientId = ClientId.fromValue(serviceConfiguration.getClientId());
-        keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleType.REALM, RoleName.fromValue(clientId.getValue().toUpperCase()));
+        RoleName roleName = RoleName.fromValue(serviceConfiguration.getClientId().getValue().toUpperCase());
+        keycloakUserService.joinRoles(newUserAccount.getIdentifier(), RoleType.REALM, roleName);
       }
 
       return newUserAccount;

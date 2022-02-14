@@ -29,9 +29,9 @@ public class KeycloakServiceConfiguration {
   private static final String REALM_DEFAULT = "missingRealm";
   private static final String CLIENT_ID_DEFAULT = "missingClientId";
 
-  private String realm;
+  private RealmName realm;
 
-  private String clientId;
+  private ClientId clientId;
 
   protected KeycloakServiceConfiguration() {
     // for framework
@@ -39,25 +39,25 @@ public class KeycloakServiceConfiguration {
 
   @Inject
   public KeycloakServiceConfiguration(
-      @ConfigProperty(name = REALM_PROPERTY, defaultValue = REALM_DEFAULT) String aRealm,
-      @ConfigProperty(name = CLIENT_ID_PROPERTY, defaultValue = CLIENT_ID_DEFAULT) String aClientId) {
-    realm = aRealm;
-    clientId = aClientId;
+      @ConfigProperty(name = REALM_PROPERTY, defaultValue = REALM_DEFAULT) String theRealm,
+      @ConfigProperty(name = CLIENT_ID_PROPERTY, defaultValue = CLIENT_ID_DEFAULT) String theClientId) {
+    realm = RealmName.fromValue(theRealm);
+    clientId = ClientId.fromValue(theClientId);
   }
 
-  public String getRealm() {
+  public RealmName getRealm() {
     return realm;
   }
 
-  public String getClientId() {
+  public ClientId getClientId() {
     return clientId;
   }
 
   public void validate() {
-    if (REALM_DEFAULT.equals(getRealm())) {
+    if (REALM_DEFAULT.equals(getRealm().getValue())) {
       throw new InvalidConfigurationException(REALM_PROPERTY);
     }
-    if (CLIENT_ID_DEFAULT.equals(getClientId())) {
+    if (CLIENT_ID_DEFAULT.equals(getClientId().getValue())) {
       throw new InvalidConfigurationException(CLIENT_ID_PROPERTY);
     }
   }

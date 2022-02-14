@@ -38,7 +38,6 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.openknowledge.authentication.domain.ClientId;
 import de.openknowledge.authentication.domain.KeycloakAdapter;
 import de.openknowledge.authentication.domain.KeycloakServiceConfiguration;
 import de.openknowledge.authentication.domain.Password;
@@ -86,7 +85,7 @@ public class KeycloakUserService {
 
   public UserAccount searchUser(Username username) {
     notNull(username, "username may be not null");
-    UsersResource usersResource = keycloakAdapter.findUsersResource(getRealmName());
+    UsersResource usersResource = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm());
     List<UserRepresentation> existingUsersByUsername = usersResource.search(username.getValue(), true);
     LOG.debug("User exists because result list is not empty (size is: {})",
       (existingUsersByUsername != null ? existingUsersByUsername.size() : "null"));
@@ -100,7 +99,7 @@ public class KeycloakUserService {
       account.emailVerified();
     }
     UserRepresentation newUser = account.asRepresentation(Boolean.TRUE);
-    Response response = keycloakAdapter.findUsersResource(getRealmName()).create(newUser);
+    Response response = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).create(newUser);
     if (response.getStatus() != 201) {
       ResponseErrorMessage message = response.readEntity(ResponseErrorMessage.class);
       throw new UserCreationFailedException(newUser.getUsername(), response.getStatus(), message.getErrorMessage());
@@ -115,7 +114,7 @@ public class KeycloakUserService {
   public UserAccount getUser(UserIdentifier identifier) throws UserNotFoundException {
     notNull(identifier, "identifier may be not null");
     try {
-      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      UserResource userResource = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).get(identifier.getValue());
       return new UserAccount(userResource.toRepresentation());
     } catch (NotFoundException e) {
       throw new UserNotFoundException(identifier, e);
@@ -127,7 +126,7 @@ public class KeycloakUserService {
     notNull(account.getIdentifier(), "account identifier may be not null");
     UserIdentifier identifier = account.getIdentifier();
     try {
-      UserResource resource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      UserResource resource = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).get(identifier.getValue());
       UserAccount user = new UserAccount(resource.toRepresentation());
       if (user.isDifferent(account)) {
         UserRepresentation updateUser = account.asRepresentation(Boolean.FALSE);
@@ -141,7 +140,7 @@ public class KeycloakUserService {
   public void resetPassword(UserIdentifier identifier, Password password) throws UserNotFoundException {
     notNull(identifier, "identifier may be not null");
     try {
-      UserResource resource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      UserResource resource = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).get(identifier.getValue());
       resource.resetPassword(password.asCredential());
     } catch (NotFoundException e) {
       throw new UserNotFoundException(identifier, e);
@@ -150,7 +149,7 @@ public class KeycloakUserService {
 
   public void deleteUser(UserIdentifier identifier) {
     notNull(identifier, "identifier may be not null");
-    Response response = keycloakAdapter.findUsersResource(getRealmName()).delete(identifier.getValue());
+    Response response = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).delete(identifier.getValue());
     if (response.getStatus() != 204 && response.getStatus() != 404) {
       throw new UserDeletionFailedException(identifier.getValue(), response.getStatus());
     }
@@ -159,7 +158,7 @@ public class KeycloakUserService {
   public void joinGroups(UserIdentifier identifier, GroupName... groupNames) throws UserNotFoundException {
     notNull(identifier, "identifier may be not null");
     try {
-      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      UserResource userResource = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).get(identifier.getValue());
       List<GroupId> joiningGroups = findGroupIds(groupNames);
       for (GroupId groupId : joiningGroups) {
         userResource.joinGroup(groupId.getValue());
@@ -172,7 +171,7 @@ public class KeycloakUserService {
   public void leaveGroups(UserIdentifier identifier, GroupName... groupNames) throws UserNotFoundException {
     notNull(identifier, "identifier may be not null");
     try {
-      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      UserResource userResource = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).get(identifier.getValue());
       List<GroupId> leavingGroups = findGroupIds(groupNames);
       for (GroupId groupId : leavingGroups) {
         userResource.leaveGroup(groupId.getValue());
@@ -185,14 +184,15 @@ public class KeycloakUserService {
   public void joinRoles(UserIdentifier identifier, RoleType roleType, RoleName... roleNames) throws UserNotFoundException {
     notNull(identifier, "identifier may be not null");
     try {
-      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      RealmName realmName = serviceConfiguration.getRealm();
+      UserResource userResource = keycloakAdapter.findUsersResource(realmName).get(identifier.getValue());
       List<RoleRepresentation> joiningRoles = findRoles(getRolesResource(roleType), roleNames);
       switch (roleType) {
         case REALM:
           userResource.roles().realmLevel().add(joiningRoles);
           break;
         case CLIENT:
-          String clientUuid = keycloakAdapter.findClientUuid(getRealmName(), getClientId());
+          String clientUuid = keycloakAdapter.findClientUuid(realmName, serviceConfiguration.getClientId());
           userResource.roles().clientLevel(clientUuid).add(joiningRoles);
           break;
         default:
@@ -206,14 +206,15 @@ public class KeycloakUserService {
   public void leaveRoles(UserIdentifier identifier, RoleType roleType, RoleName... roleNames) throws UserNotFoundException {
     notNull(identifier, "identifier may be not null");
     try {
-      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
+      RealmName realmName = serviceConfiguration.getRealm();
+      UserResource userResource = keycloakAdapter.findUsersResource(realmName).get(identifier.getValue());
       List<RoleRepresentation> leavingRoles = findRoles(getRolesResource(roleType), roleNames);
       switch (roleType) {
         case REALM:
           userResource.roles().realmLevel().remove(leavingRoles);
           break;
         case CLIENT:
-          String clientUuid = keycloakAdapter.findClientUuid(getRealmName(), getClientId());
+          String clientUuid = keycloakAdapter.findClientUuid(realmName, serviceConfiguration.getClientId());
           userResource.roles().clientLevel(clientUuid).remove(leavingRoles);
           break;
         default:
@@ -227,8 +228,8 @@ public class KeycloakUserService {
   public void executeActionsEmail(UserIdentifier identifier, RedirectUrl redirectUrl, Integer lifespan, UserAction... actions) {
     notNull(identifier, "identifier may be not null");
     try {
-      UserResource userResource = keycloakAdapter.findUsersResource(getRealmName()).get(identifier.getValue());
-      userResource.executeActionsEmail(getClientId().getValue(),
+      UserResource userResource = keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).get(identifier.getValue());
+      userResource.executeActionsEmail(serviceConfiguration.getClientId().getValue(),
         redirectUrl.getValue(),
         lifespan,
         Arrays.stream(actions).map(UserAction::name).collect(Collectors.toList()));
@@ -238,12 +239,12 @@ public class KeycloakUserService {
   }
 
   private List<GroupId> findGroupIds(GroupName... groupNames) {
-    GroupsResource resource = keycloakAdapter.findGroupsResource(getRealmName());
+    GroupsResource resource = keycloakAdapter.findGroupsResource(serviceConfiguration.getRealm());
     List<GroupId> searchedGroups = new ArrayList<>();
     for (GroupName groupName : groupNames) {
       List<GroupRepresentation> groups = resource.groups(groupName.getValue(), 0, 1);
       if (groups == null || groups.isEmpty()) {
-        LOG.warn("Group (name='{}') not found", groupName.getValue());
+        LOG.warn("Group (name='{}') not found", groupName.getValue());
       } else {
         searchedGroups.addAll(groups.stream().map(group -> GroupId.fromValue(group.getId())).collect(Collectors.toList()));
       }
@@ -266,23 +267,15 @@ public class KeycloakUserService {
   }
 
   private RolesResource getRolesResource(RoleType roleType) {
-    RealmName realmName = getRealmName();
+    RealmName realmName = serviceConfiguration.getRealm();
     switch (roleType) {
       case REALM:
         return keycloakAdapter.findRealmRolesResource(realmName);
       case CLIENT:
-        return keycloakAdapter.findClientRolesResource(realmName, getClientId());
+        return keycloakAdapter.findClientRolesResource(realmName, serviceConfiguration.getClientId());
       default:
         throw new IllegalArgumentException("unsupported roleType " + roleType);
     }
-  }
-
-  private RealmName getRealmName() {
-    return RealmName.fromValue(serviceConfiguration.getRealm());
-  }
-
-  private ClientId getClientId() {
-    return ClientId.fromValue(serviceConfiguration.getClientId());
   }
 
 }
