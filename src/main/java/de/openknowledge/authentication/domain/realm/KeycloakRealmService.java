@@ -42,8 +42,8 @@ public class KeycloakRealmService {
   }
 
   @Inject
-  public KeycloakRealmService(KeycloakAdapter aKeycloakAdapter) {
-    keycloakAdapter = aKeycloakAdapter;
+  public KeycloakRealmService(KeycloakAdapter theKeycloakAdapter) {
+    keycloakAdapter = theKeycloakAdapter;
   }
 
   public List<RealmName> getRealms() {
