@@ -67,7 +67,15 @@ public class KeycloakLoginService {
   }
 
   public LoginToken login(Login login, ClientId clientId) {
-    AccessTokenResponse response = grantToken(login, clientId.getValue());
+    Form form = new Form().param(GRANT_TYPE, PASSWORD)
+      .param(USERNAME, login.getUsername().getValue())
+      .param(PASSWORD, login.getPassword().getValue())
+      .param(CLIENT_ID, clientId.getValue());
+    return login(form);
+  }
+
+  public LoginToken login(Form form) {
+    AccessTokenResponse response = grantToken(form);
     return new LoginToken(response.getToken(), response.getExpiresIn(),
       response.getRefreshToken(), response.getRefreshExpiresIn());
   }
@@ -77,7 +85,14 @@ public class KeycloakLoginService {
   }
 
   public LoginToken refresh(RefreshToken refreshToken, ClientId clientId) {
-    AccessTokenResponse response = refreshToken(refreshToken, clientId.getValue());
+    Form form = new Form().param(GRANT_TYPE, REFRESH_TOKEN)
+      .param(REFRESH_TOKEN, refreshToken.getValue())
+      .param(CLIENT_ID, clientId.getValue());
+    return refresh(form);
+  }
+
+  public LoginToken refresh(Form form) {
+    AccessTokenResponse response = refreshToken(form);
     return new LoginToken(response.getToken(), response.getExpiresIn(),
         response.getRefreshToken(), response.getRefreshExpiresIn());
   }
@@ -86,20 +101,13 @@ public class KeycloakLoginService {
     keycloakAdapter.findUsersResource(serviceConfiguration.getRealm()).get(identifier.getValue()).logout();
   }
 
-  private AccessTokenResponse grantToken(Login login, String clientId) {
-    Form form = new Form().param(GRANT_TYPE, PASSWORD)
-        .param(USERNAME, login.getUsername().getValue())
-        .param(PASSWORD, login.getPassword().getValue())
-        .param(CLIENT_ID, clientId);
+  private AccessTokenResponse grantToken(Form form) {
     synchronized (this) {
       return keycloakAdapter.getTokenService().grantToken(serviceConfiguration.getRealm().getValue(), form.asMap());
     }
   }
 
-  private AccessTokenResponse refreshToken(RefreshToken refreshToken, String clientId) {
-    Form form = new Form().param(GRANT_TYPE, REFRESH_TOKEN)
-        .param(REFRESH_TOKEN, refreshToken.getValue())
-        .param(CLIENT_ID, clientId);
+  private AccessTokenResponse refreshToken(Form form) {
     synchronized (this) {
       return keycloakAdapter.getTokenService().refreshToken(serviceConfiguration.getRealm().getValue(), form.asMap());
     }
