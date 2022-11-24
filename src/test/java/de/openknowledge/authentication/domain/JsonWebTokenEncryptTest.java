@@ -3,18 +3,16 @@ package de.openknowledge.authentication.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.security.KeyPair;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.keycloak.common.util.KeyUtils;
+import org.keycloak.common.crypto.CryptoIntegration;
 
 import de.openknowledge.authentication.domain.registration.Issuer;
 import de.openknowledge.authentication.domain.token.KeycloakKeyConfiguration;
 import de.openknowledge.authentication.domain.token.KeycloakTokenService;
 import de.openknowledge.authentication.domain.token.Token;
-import de.openknowledge.authentication.domain.token.TokenSecret;
 import de.openknowledge.authentication.domain.token.VerificationLink;
 import de.openknowledge.authentication.domain.user.EmailAddress;
 
@@ -24,6 +22,7 @@ class JsonWebTokenEncryptTest {
 
   @BeforeEach
   void setup() {
+    CryptoIntegration.init(this.getClass().getClassLoader());
     service = new KeycloakTokenService(createKeyConfig());
     service.init();
   }
@@ -36,8 +35,8 @@ class JsonWebTokenEncryptTest {
     Issuer issuer = Issuer.fromValue("unit-test");
     Token encodeToken = new Token(username, userIdentifier, emailAddress, issuer, 5, TimeUnit.MINUTES);
 
-    TokenSecret tokenSecret = TokenSecret.fromValue("bb401f71e743458186e90541603fcace");
-    KeyPair keyPair = KeyUtils.generateRsaKeyPair(2048);
+    //TokenSecret tokenSecret = TokenSecret.fromValue("bb401f71e743458186e90541603fcace");
+    //KeyPair keyPair = KeyUtils.generateRsaKeyPair(2048);
 
     VerificationLink link = service.encode(encodeToken);
 

@@ -22,6 +22,7 @@ import static de.openknowledge.common.domain.ObjectMother.createToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.keycloak.common.crypto.CryptoIntegration;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +36,7 @@ public class KeycloakTokenServiceTest {
 
   @BeforeEach
   void setup() {
+    CryptoIntegration.init(this.getClass().getClassLoader());
     token = createToken();
     KeycloakKeyConfiguration configuration = createKeyConfig();
     service = new KeycloakTokenService(configuration);
