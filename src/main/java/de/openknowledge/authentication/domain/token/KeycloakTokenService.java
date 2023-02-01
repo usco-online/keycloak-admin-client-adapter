@@ -27,13 +27,13 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.bind.JsonbBuilder;
 
+import org.keycloak.crypto.def.DefaultRsaKeyEncryptionJWEAlgorithmProvider;
 import org.keycloak.jose.jwe.JWE;
 import org.keycloak.jose.jwe.JWEConstants;
 import org.keycloak.jose.jwe.JWEException;
 import org.keycloak.jose.jwe.JWEHeader;
 import org.keycloak.jose.jwe.JWEKeyStorage;
 import org.keycloak.jose.jwe.alg.JWEAlgorithmProvider;
-import org.keycloak.jose.jwe.alg.RsaKeyEncryptionJWEAlgorithmProvider;
 import org.keycloak.jose.jwe.enc.AesCbcHmacShaEncryptionProvider;
 import org.keycloak.jose.jwe.enc.JWEEncryptionProvider;
 import org.slf4j.Logger;
@@ -121,7 +121,7 @@ public class KeycloakTokenService {
   }
 
   private JWEAlgorithmProvider getAlgorithmProvider() {
-    return new RsaKeyEncryptionJWEAlgorithmProvider("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+    return new DefaultRsaKeyEncryptionJWEAlgorithmProvider("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
   }
 
   private JWEEncryptionProvider getEncryptionProvider() {
