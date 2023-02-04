@@ -15,6 +15,7 @@
  */
 package de.openknowledge.authentication.domain;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -23,8 +24,8 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.ClientBuilder;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.admin.client.ClientBuilderWrapper;
+import org.keycloak.admin.client.JacksonProvider;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.ClientResource;
@@ -37,9 +38,13 @@ import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.admin.client.token.TokenService;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class KeycloakAdapter {
+
+  private static final Logger LOG = LoggerFactory.getLogger(KeycloakAdapter.class);
 
   private Keycloak keycloak;
 
@@ -51,11 +56,15 @@ public class KeycloakAdapter {
 
   @Inject
   public KeycloakAdapter(KeycloakAdapterConfiguration adapterConfig) {
-    ResteasyClient newClient = (ResteasyClient) ResteasyClientBuilder.newClient();
-    ClientBuilder clientBuilder = ClientBuilderWrapper.create(newClient.getSslContext(), false);
-    ResteasyClient restClient = (ResteasyClient) clientBuilder.build();
+    ClientBuilder clientBuilder = ClientBuilderWrapper.create(null, false);
+    clientBuilder.register(JacksonProvider.class, 100);
+    try {
+      clientBuilder.getClass().getMethod("connectionPoolSize", int.class)
+        .invoke(clientBuilder, adapterConfig.getConnectionPoolSize());
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      LOG.error("Cannot set connectionPoolSize", e);
+    }
 
-    //ResteasyClient restClient = new ResteasyClientBuilder().connectionPoolSize(adapterConfig.getConnectionPoolSize()).build();
     keycloak = KeycloakBuilder.builder()
         .serverUrl(adapterConfig.getServerUrl())
         .realm(adapterConfig.getMasterRealm())
@@ -63,9 +72,9 @@ public class KeycloakAdapter {
         .username(adapterConfig.getUsername())
         .password(adapterConfig.getPassword())
         .clientId(adapterConfig.getClientId())
-        .resteasyClient(null)
+        .resteasyClient(clientBuilder.build())
         .build();
-    tokenService = restClient.target(adapterConfig.getServerUrl()).proxy(TokenService.class);
+    tokenService = ((ResteasyClient)clientBuilder.build()).target(adapterConfig.getServerUrl()).proxy(TokenService.class);
   }
 
   public List<RealmRepresentation> findAll() {
