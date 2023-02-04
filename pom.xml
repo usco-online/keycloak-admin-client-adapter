@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.usco</groupId>
     <artifactId>keycloak-admin-client-adapter</artifactId>
-    <version>1.5.14</version>
+    <version>1.5.15</version>
     <packaging>jar</packaging>
 
     <name>Keycloak Admin Client Adapter</name>
@@ -102,7 +102,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-crypto-default</artifactId>
-            <version>20.0.3</version>
+            <version>${keycloak-admin-client.version}</version>
         </dependency>
         <!-- java enterprise and microprofile dependencies -->
         <dependency>
