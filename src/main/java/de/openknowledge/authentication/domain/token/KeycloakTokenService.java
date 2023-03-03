@@ -15,29 +15,24 @@
  */
 package de.openknowledge.authentication.domain.token;
 
-import java.nio.charset.StandardCharsets;
+import java.io.StringReader;
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 
 import javax.annotation.PostConstruct;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 
-import org.keycloak.crypto.def.DefaultRsaKeyEncryptionJWEAlgorithmProvider;
-import org.keycloak.jose.jwe.JWE;
-import org.keycloak.jose.jwe.JWEConstants;
-import org.keycloak.jose.jwe.JWEException;
-import org.keycloak.jose.jwe.JWEHeader;
-import org.keycloak.jose.jwe.JWEKeyStorage;
-import org.keycloak.jose.jwe.alg.JWEAlgorithmProvider;
-import org.keycloak.jose.jwe.enc.AesCbcHmacShaEncryptionProvider;
-import org.keycloak.jose.jwe.enc.JWEEncryptionProvider;
+import org.jose4j.jwt.consumer.JwtContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.smallrye.jwt.auth.principal.DefaultJWTTokenParser;
+import io.smallrye.jwt.auth.principal.JWTAuthContextInfo;
+import io.smallrye.jwt.build.Jwt;
 
 @ApplicationScoped
 public class KeycloakTokenService {
@@ -47,8 +42,6 @@ public class KeycloakTokenService {
   private KeycloakKeyConfiguration keyConfiguration;
 
   private KeyPair keyPair;
-
-  private TokenSecret tokenSecret;
 
   @SuppressWarnings("unused")
   protected KeycloakTokenService() {
@@ -65,67 +58,63 @@ public class KeycloakTokenService {
     LOG.debug("check configuration");
     keyConfiguration.validate();
     keyPair = KeycloakKeyService.readKeyPair(keyConfiguration);
-    tokenSecret = TokenSecret.fromValue(keyConfiguration.getTokenSecret());
   }
 
   public VerificationLink encode(Token token) {
-    try {
-      String payload = JsonbBuilder.create().toJson(token);
-      LOG.debug("payload: {}", payload);
-      JWE jwe = jwtEncode(tokenSecret, keyPair.getPublic());
-      jwe.content(payload.getBytes(StandardCharsets.UTF_8));
-      String encodedPayload = jwe.encodeJwe(getAlgorithmProvider(), getEncryptionProvider());
-      LOG.debug("encoded payload: {}", encodedPayload);
+    try (Jsonb jsonb = JsonbBuilder.create()) {
+      String payload = jsonb.toJson(token);
+      String encodedPayload = encodeJwe(payload);
       return VerificationLink.fromValue(encodedPayload);
-    } catch (JWEException e) {
+    } catch (Exception e) {
       LOG.error("problem during encode JWT: {}", e.getMessage(), e);
       throw new IllegalArgumentException("problem during encode" + e.getMessage(), e);
     }
   }
 
   public Token decode(VerificationLink link) {
-    try {
-      LOG.debug("payload: {}", link.getValue());
-      JWE jwe = jwtDecoder(tokenSecret, keyPair.getPrivate());
-      jwe.verifyAndDecodeJwe(link.getValue(), getAlgorithmProvider(), getEncryptionProvider());
-      String decodedPayload = new String(jwe.getContent(), StandardCharsets.UTF_8);
-      LOG.debug("decoded payload: {}", decodedPayload);
-      return JsonbBuilder.create().fromJson(decodedPayload, Token.class);
-    } catch (JWEException e) {
+    try (Jsonb jsonb = JsonbBuilder.create()) {
+      String decodedPayload = decodeJwe(link.getValue());
+      return jsonb.fromJson(decodedPayload, Token.class);
+    } catch (Exception e) {
       LOG.error("problem during decode JWT: {}", e.getMessage(), e);
       throw new IllegalArgumentException("problem during decode" + e.getMessage(), e);
     }
   }
 
-  private JWE jwtEncode(TokenSecret tokenSecret, PublicKey encryptionKey) {
-    JWEHeader jweHeader = new JWEHeader(JWEConstants.A256CBC_HS512, JWEConstants.A256CBC_HS512, null);
-    JWE jwe = new JWE();
-    jwe.header(jweHeader);
-    jwe.getKeyStorage().setEncryptionKey(encryptionKey);
-    enrichKeyStorage(jwe, tokenSecret);
-    return jwe;
+  private String encodeJwe(String payload) {
+    try {
+      LOG.debug("payload: {}", payload);
+      JsonObject jsonObject = Json.createReader(new StringReader(payload)).readObject();
+      String encodedPayload = Jwt.claims(jsonObject)
+        .jwe()
+        .header("cty", "JWE")
+        .encrypt(keyPair.getPublic());
+      LOG.debug("encoded payload: {}", encodedPayload);
+      return encodedPayload;
+    } catch (Exception e) {
+      LOG.error("problem during encode JWT: {}", e.getMessage(), e);
+      throw new IllegalArgumentException("problem during encode" + e.getMessage(), e);
+    }
   }
 
-  private JWE jwtDecoder(TokenSecret tokenSecret, PrivateKey decryptionKey) {
-    JWE jwe = new JWE();
-    jwe.getKeyStorage().setDecryptionKey(decryptionKey);
-    enrichKeyStorage(jwe, tokenSecret);
-    return jwe;
-  }
+  private String decodeJwe(String payload) {
+    try {
+      LOG.debug("payload: {}", payload);
 
-  private void enrichKeyStorage(JWE jwe, TokenSecret tokenSecret) {
-    SecretKey aesKey = new SecretKeySpec(tokenSecret.asByteArray(), "AES");
-    SecretKey hmacKey = new SecretKeySpec(tokenSecret.asByteArray(), "HMACSHA2");
-    jwe.getKeyStorage().setCEKKey(aesKey, JWEKeyStorage.KeyUse.ENCRYPTION);
-    jwe.getKeyStorage().setCEKKey(hmacKey, JWEKeyStorage.KeyUse.SIGNATURE);
-  }
+      JWTAuthContextInfo info = new JWTAuthContextInfo();
+      info.setPrivateDecryptionKey(keyPair.getPrivate());
+      info.setExpGracePeriodSecs(30);
 
-  private JWEAlgorithmProvider getAlgorithmProvider() {
-    return new DefaultRsaKeyEncryptionJWEAlgorithmProvider("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
-  }
+      DefaultJWTTokenParser parser = new DefaultJWTTokenParser();
+      JwtContext jwtContext = parser.parse(payload, info);
 
-  private JWEEncryptionProvider getEncryptionProvider() {
-    return new AesCbcHmacShaEncryptionProvider.Aes256CbcHmacSha512Provider();
+      String decodedPayload = jwtContext.getJoseObjects().get(0).getPayload();
+      LOG.debug("decoded payload: {}", decodedPayload);
+      return decodedPayload;
+    } catch (Exception e) {
+      LOG.error("problem during decode JWT: {}", e.getMessage(), e);
+      throw new IllegalArgumentException("problem during decode" + e.getMessage(), e);
+    }
   }
 
 }
