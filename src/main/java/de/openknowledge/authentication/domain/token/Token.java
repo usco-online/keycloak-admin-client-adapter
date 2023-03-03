@@ -15,6 +15,8 @@
  */
 package de.openknowledge.authentication.domain.token;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +32,7 @@ import de.openknowledge.authentication.domain.registration.RegistrationMode;
 import de.openknowledge.authentication.domain.user.EmailAddress;
 import de.openknowledge.authentication.domain.UserIdentifier;
 
+@RegisterForReflection
 public class Token {
 
   @JsonbProperty("jti")

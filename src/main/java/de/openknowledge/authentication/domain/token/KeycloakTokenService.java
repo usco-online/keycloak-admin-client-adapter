@@ -30,6 +30,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.smallrye.jwt.algorithm.KeyEncryptionAlgorithm;
 import io.smallrye.jwt.auth.principal.DefaultJWTTokenParser;
 import io.smallrye.jwt.auth.principal.JWTAuthContextInfo;
 import io.smallrye.jwt.build.Jwt;
@@ -88,6 +89,7 @@ public class KeycloakTokenService {
       String encodedPayload = Jwt.claims(jsonObject)
         .jwe()
         .header("cty", "JWE")
+        .keyAlgorithm(KeyEncryptionAlgorithm.RSA_OAEP)
         .encrypt(keyPair.getPublic());
       LOG.debug("encoded payload: {}", encodedPayload);
       return encodedPayload;
