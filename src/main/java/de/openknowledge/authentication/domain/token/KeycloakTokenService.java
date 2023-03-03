@@ -27,7 +27,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.bind.JsonbBuilder;
 
-import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.crypto.def.DefaultRsaKeyEncryptionJWEAlgorithmProvider;
 import org.keycloak.jose.jwe.JWE;
 import org.keycloak.jose.jwe.JWEConstants;
@@ -67,7 +66,6 @@ public class KeycloakTokenService {
     keyConfiguration.validate();
     keyPair = KeycloakKeyService.readKeyPair(keyConfiguration);
     tokenSecret = TokenSecret.fromValue(keyConfiguration.getTokenSecret());
-    CryptoIntegration.init(this.getClass().getClassLoader());
   }
 
   public VerificationLink encode(Token token) {

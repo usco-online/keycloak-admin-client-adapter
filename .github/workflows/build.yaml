@@ -4,10 +4,12 @@ on:
   - pull_request
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-18.04
+    name: Build Keycloak Admin Client Adapter
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
@@ -15,23 +17,28 @@ jobs:
           server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
+
       - name: Configure Git signing
         run: |
           echo "${GPG_KEY}" | gpg --dearmor | gpg --batch --yes --import -
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
+
       - name: Get branch name
         shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/})"
+        run: echo "branch=$(echo ${GITHUB_REF##*/})" >> $GITHUB_OUTPUT
         id: get_branch
+
       - name: Cache Maven packages
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+
       - name: Build up cache
         run: |
+          mkdir -p ~/.m2
           echo "${MAVEN_SETTINGS}" > ~/.m2/settings.xml
           maven_temp_dir="$(mktemp -d)"
           cp pom.xml "${maven_temp_dir}"
@@ -44,15 +51,18 @@ jobs:
           MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS }}
           MAVEN_OPTS: >
             -Dmaven.wagon.http.retryHandler.count=5
+
       - name: Build artifact
         run: |
           echo "run mvn package"
           mvn package
+
       - if: steps.get_branch.outputs.branch == 'develop'
         name: Verify artifact
         run: |
           echo "run mvn verify"
           mvn --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.GPG_KEY_PASSWORD }} verify
+
       - if: steps.get_branch.outputs.branch == 'master'
         name: Publish to Central Repository
         run: |
