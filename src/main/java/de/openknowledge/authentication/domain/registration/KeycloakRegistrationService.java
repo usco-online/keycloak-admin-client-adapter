@@ -132,6 +132,12 @@ public class KeycloakRegistrationService {
     return keycloakTokenService.encode(token);
   }
 
+  public Integer getPasswordResetLifeTimeAsSeconds() {
+    long lifeTime = Long.parseLong(registrationServiceConfiguration.getPasswordResetLifeTime());
+    TimeUnit timeUnit = TimeUnit.valueOf(registrationServiceConfiguration.getPasswordResetTimeUnit());
+    return Long.valueOf(timeUnit.toSeconds(lifeTime)).intValue();
+  }
+
   public KeycloakUserService getKeycloakUserService() {
     return keycloakUserService;
   }

@@ -1,6 +1,5 @@
 package de.openknowledge.authentication.domain;
 
-import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import de.openknowledge.authentication.domain.group.GroupName;
@@ -49,7 +48,7 @@ public class KeycloakAdminTester {
       "admin",
       "keycloak",
       "password",
-      "5");;
+      "5");
 
   private static final KeycloakAdapter ADAPTER = new KeycloakAdapter(ADAPTER_CONFIG);
   private static final KeycloakUserService USER_SERVICE = createUserService();
@@ -59,7 +58,7 @@ public class KeycloakAdminTester {
   private static final UserAccount ACCOUNT = createAccount();
 
 
-  public static void main(String[] args) throws URISyntaxException {
+  public static void main(String[] args) {
     try {
       USER_SERVICE.getUser(UserIdentifier.fromValue("47110815"));
     } catch (UserNotFoundException e) {
@@ -141,10 +140,14 @@ public class KeycloakAdminTester {
     KeycloakTokenService tokenService = new KeycloakTokenService(keyConfig);
     tokenService.init();
 
-    KeycloakRegistrationServiceConfiguration registrationServiceConfig = new KeycloakRegistrationServiceConfiguration("DOUBLE_OPT_IN",
+    KeycloakRegistrationServiceConfiguration registrationServiceConfig = new KeycloakRegistrationServiceConfiguration(
+        "DOUBLE_OPT_IN",
         "ROLE",
         "5",
-        "MINUTES");
+        "MINUTES",
+        "1",
+        "DAYS"
+    );
 
     KeycloakRegistrationService registrationService = new KeycloakRegistrationService(SERVICE_CONFIG,
         registrationServiceConfig,

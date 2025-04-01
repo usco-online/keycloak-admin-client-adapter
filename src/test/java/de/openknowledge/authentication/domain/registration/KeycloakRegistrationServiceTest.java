@@ -72,7 +72,7 @@ public class KeycloakRegistrationServiceTest {
     token = createToken();
     KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
     KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
-        RegistrationMode.DOUBLE_OPT_IN.name(), RegistrationRequirement.ROLE.name(), "5", "MINUTES");
+        RegistrationMode.DOUBLE_OPT_IN.name(), RegistrationRequirement.ROLE.name(), "5", "MINUTES", "1", "DAYS");
     service = new KeycloakRegistrationService(serviceConfiguration,
         registrationServiceConfiguration,
         keycloakUserService,
@@ -99,7 +99,7 @@ public class KeycloakRegistrationServiceTest {
     // setup service
     KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
     KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
-        RegistrationMode.DEFAULT.name(), RegistrationRequirement.ROLE.name(), "5", "MINUTES");
+        RegistrationMode.DEFAULT.name(), RegistrationRequirement.ROLE.name(), "5", "MINUTES", "1", "DAYS");
     KeycloakRegistrationService noDoubleOptInService = new KeycloakRegistrationService(serviceConfiguration,
         registrationServiceConfiguration,
         keycloakUserService,
@@ -125,7 +125,7 @@ public class KeycloakRegistrationServiceTest {
     // setup service
     KeycloakServiceConfiguration serviceConfiguration = new KeycloakServiceConfiguration(REALM_NAME.getValue(), CLIENT_ID.getValue());
     KeycloakRegistrationServiceConfiguration registrationServiceConfiguration = new KeycloakRegistrationServiceConfiguration(
-        RegistrationMode.DOUBLE_OPT_IN.name(), RegistrationRequirement.DEFAULT.name(), "5", "MINUTES");
+        RegistrationMode.DOUBLE_OPT_IN.name(), RegistrationRequirement.DEFAULT.name(), "5", "MINUTES", "1", "DAYS");
     KeycloakRegistrationService noRoleRequiredService = new KeycloakRegistrationService(serviceConfiguration,
         registrationServiceConfiguration,
         keycloakUserService,
@@ -204,6 +204,12 @@ public class KeycloakRegistrationServiceTest {
     KeycloakUserService userService = service.getKeycloakUserService();
     assertThat(userService).isEqualTo(keycloakUserService);
     verifyNoMoreInteractions(keycloakUserService, keycloakTokenService);
+  }
+
+  @Test
+  void returnsValidPasswordLifeTime() {
+    Integer lifeTimeInSeconds = service.getPasswordResetLifeTimeAsSeconds();
+    assertThat(lifeTimeInSeconds).isEqualTo(86400);
   }
 
 }
